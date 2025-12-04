@@ -19,4 +19,6 @@ void temp_sensor_init();
 
 uint16_t temp_read();
 
+uint16_t temp_read_amb();
+
 #endif /* TEMP_H_ */

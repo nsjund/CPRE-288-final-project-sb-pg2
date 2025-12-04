@@ -23,30 +23,25 @@ uint8_t is_path_valid(s_object_t* stored, path_t p, uint8_t stored_count){
 
 
 
-int do_scan_filter(float* scan_points, object_t* object_list, float* raw_data, oi_t* sensor, s_object_t* stored_objects, uint8_t* stored_count, s_pos *self){
-    float outliers_filtered[91] = {0};
-
+int do_scan_filter(scan_point_t* scan_points, object_t* object_list, float* raw_data, oi_t* sensor, s_object_t* stored_objects, uint8_t* stored_count, s_pos *self){
     do_ir_scan(scan_points);
-    for(int i = 0; i < 91; i++){
-        raw_data[i] = scan_points[i];
-    }
-    filter_outlier(outliers_filtered, scan_points, 1000.0);
-    filter_outlier(scan_points, outliers_filtered, 1000.0);
     int object_count = find_objects(object_list, scan_points, 1000.0, sensor);
     compensate_for_displacement(object_list, object_count);
     *stored_count = store_objects(object_list, self, stored_objects, object_count, *stored_count);
     return object_count;
 }
 
-void do_ir_scan(float* scan_points){
-    scan_init(0x05);
+void do_ir_scan(scan_point_t* scan_points){
+    scan_init(0b00001101);
+    // Initialize Temp Sensor + Servo + ADC
     cyBOT_Scan_t scan;
     cyBOT_Scan(0, &scan);
     for(int i = 0; i <= 90; i++){
         cyBOT_Scan((i * 2), &scan);
-        scan_points[i] = get_dist_from_IR(adc_read());
-        if(scan_points[i] < 1.0){
-            scan_points[i] = 2000.0;
+        scan_points[i].dist = get_dist_from_IR(adc_read());
+        scan_points[i].temp = ((temp_read() / 50.0) - 273.15) * 1.8 + 32;
+        if(scan_points[i].dist < 1.0){
+            scan_points[i].dist = 2000.0;
         }
     }
 }
@@ -174,24 +169,24 @@ uint8_t compare_objects(s_object_t a, s_object_t b){
 }
 
 
-int find_objects(object_t* object_list, float* distances, float threshold, oi_t* sensor){
+int find_objects(object_t* object_list, scan_point_t* distances, float threshold, oi_t* sensor){
     int object_count = 0;
     for(int i = 0; i < 91; i++){
-        if((i == 0) && (distances[i] < threshold)){
+        if((i == 0) && (distances[i].dist < threshold)){
             object_list[object_count].start_angle = 0;
         }
         if(i > 0){
-            if(distances[i-1] > threshold && distances[i] < threshold){
+            if(distances[i-1].dist > threshold && distances[i].dist < threshold){
                 object_list[object_count].start_angle = i * 2;
             }
-            if(distances[i-1] < threshold && distances[i] > threshold){
+            if(distances[i-1].dist < threshold && distances[i].dist > threshold){
                 object_list[object_count].end_angle = (i - 1) * 2;
                 if(object_list[object_count].end_angle - object_list[object_count].start_angle > 2){
                     object_count++;
                 }
             }
         }
-        if(i == 90 && distances[i] < threshold){
+        if(i == 90 && distances[i].dist < threshold){
             object_list[object_count].end_angle = 180;
             if(object_list[object_count].end_angle - object_list[object_count].start_angle > 2){
                 object_count++;
@@ -269,13 +264,13 @@ void filter_outlier(float* outliers_filtered, float* distances, float threshold)
 }
 
 
-void send_scan(float *scan_points, float *raw_data){
+void send_scan(scan_point_t *scan_points, float *raw_data){
     char data[30];
     //putty_print("Degrees      Distance (cm)\n");
-    uart_sendStr("Degrees\tDist\tRaw\tIR\r");
+    uart_sendStr("Degrees\tDist\tTemp\tRaw\tIR\r");
     int i;
     for(i = 0; i <= 90; i++){
-        sprintf(data, "%d\t%.2f\t%.2f\r", i * 2, scan_points[i], raw_data[i]);
+        sprintf(data, "%d\t%.2f\t%.2f\t%.2f\r", i * 2, scan_points[i].dist, scan_points[i].temp, raw_data[i]);
         uart_sendStr(data);
     }
     uart_sendChar('\n');

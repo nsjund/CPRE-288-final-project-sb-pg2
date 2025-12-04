@@ -28,9 +28,9 @@ typedef union{
     short s;
 }tx_short_t;
 
-void run_auto_mode(float *scan_points, object_t *object_list, float *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self);
+void run_auto_mode(scan_point_t *scan_points, object_t *object_list, scan_point_t *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self);
 
-void run_object_scan(float *scan_points, object_t *object_list, float *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self);
+void run_object_scan(scan_point_t *scan_points, object_t *object_list, scan_point_t *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self);
 
 void run_calibrate_servo();
 
@@ -50,7 +50,7 @@ void run_turn_right(oi_t *sensor_data, s_pos *self);
 
 void run_get_status(s_pos *self, s_object_t *stored_objects, uint8_t stored_count);
 
-void run_basic_scan(float *raw_data);
+void run_basic_scan(scan_point_t *raw_data);
 
 void run_dist_ahead();
 
