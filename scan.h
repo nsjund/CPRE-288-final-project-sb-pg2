@@ -13,6 +13,7 @@
 #include "servo.h"
 #include "movement.h"
 #include "util.h"
+#include "temp.h"
 
 float p1, p2, p3;
 
@@ -34,23 +35,29 @@ typedef struct
     short width;
 }s_object_t;
 
+typedef struct
+{
+    float temp;
+    float dist;
+}scan_point_t;
+
 void print_to_csv(float* scan_points);
 
 void do_scan(float *scan_points);
 
-void send_scan(float *scan_points, float *raw_data);
+void send_scan(scan_point_t *scan_points, float *raw_data);
 
 void filter_outlier(float* outliers_filtered, float* distances, float threshold);
 
-int find_objects(object_t* object_list, float* distances, float threshold, oi_t* sensor);
+int find_objects(object_t* object_list, scan_point_t* distances, float threshold, oi_t* sensor);
 
 void print_objects(object_t* object_list, int object_count);
 
 void go_to_smallest(object_t* objects, uint8_t* count, oi_t* sensor, s_pos *self, s_object_t* stored_objects);
 
-int do_scan_filter(float* scan_points, object_t* object_list, float* raw_data, oi_t* sensor, s_object_t* stored_objects, uint8_t* stored_count, s_pos *self);
+int do_scan_filter(scan_point_t* scan_points, object_t* object_list, float* raw_data, oi_t* sensor, s_object_t* stored_objects, uint8_t* stored_count, s_pos *self);
 
-void do_ir_scan(float* scan_points);
+void do_ir_scan(scan_point_t* scan_points);
 
 void scan_init(char init_val);
 

@@ -4,7 +4,7 @@ char msg[40] = {0};
 
 cyBOT_Scan_t scan;
 
-void run_auto_mode(float *scan_points, object_t *object_list, float *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self){
+void run_auto_mode(scan_point_t *scan_points, object_t *object_list, scan_point_t *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self){
     int object_count = do_scan_filter(scan_points, object_list, raw_data, sensor_data, stored_objects, stored_count, self);
     go_to_smallest(object_list, stored_count, sensor_data, self, stored_objects);
     cyBOT_Scan(90, &scan);
@@ -15,10 +15,16 @@ void run_auto_mode(float *scan_points, object_t *object_list, float *raw_data, o
     print_stored(stored_objects, *stored_count, self);
 }
 
-void run_object_scan(float *scan_points, object_t *object_list, float *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self){
+void run_object_scan(scan_point_t *scan_points, object_t *object_list, scan_point_t *raw_data, oi_t *sensor_data, s_object_t *stored_objects, uint8_t *stored_count, s_pos *self){
     int object_count = do_scan_filter(scan_points, object_list, raw_data, sensor_data, stored_objects, stored_count, self);
+    char hot_found = 0;
+    for(int i = 0; i <= 90; i++){
+        if(scan_points->temp > 75.0){
+            hot_found = 1;
+        }
+    }
     cyBOT_Scan(90, &scan);
-    uart_sendChar(0x05);
+    uart_sendChar(0xF0 + hot_found);
 }
 
 void run_calibrate_servo(){
@@ -35,8 +41,8 @@ void run_test_1(s_pos *self){
     scan_init(0x08);
     cyBOT_Scan(90, &scan);
     uint16_t ir = adc_read();
-    sprintf(msg, "raw: %d, ir dist: %f, sonar dist: %f\r", ir, get_dist_from_IR(ir), scan.sound_dist * 10);
-    uart_sendStr(msg);
+    //sprintf(msg, "raw: %d, ir dist: %f, sonar dist: %f\r", ir, get_dist_from_IR(ir), scan.sound_dist * 10);
+    //uart_sendStr(msg);
     uart_sendChar('\n');
 }
 
@@ -92,7 +98,7 @@ void run_calibrate_ir(){
 }
 
 void run_move_forward(oi_t *sensor_data, s_pos *self){
-    move_forward(sensor_data, 50, 150, self);
+    move_forward(sensor_data, 50, 200, self);
     uart_sendChar(0x0B);
 }
 
@@ -127,7 +133,7 @@ void run_get_status(s_pos *self, s_object_t *stored_objects, uint8_t stored_coun
     }
 }
 
-void run_basic_scan(float *raw_data){
+void run_basic_scan(scan_point_t *raw_data){
     do_ir_scan(raw_data);
     uart_sendChar('\n');
 }
@@ -160,5 +166,4 @@ void send_short(tx_short_t data){
     uart_sendChar(data.c[0]);
     uart_sendChar(data.c[1]);
 }
-
 

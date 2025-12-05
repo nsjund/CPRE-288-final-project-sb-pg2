@@ -1,7 +1,6 @@
 import time
 import socket  
 import struct
-import gui
 import tkinter as tk
 import math
 from PIL import Image, ImageTk
@@ -24,9 +23,13 @@ def scan_for_objects():
         cybot.write(b"\x05")
         cybot.write('\n'.encode())
         start_byte = cybot.read(1)
-        if start_byte != b"\x05":
+        if start_byte != b"\xF0" and start_byte != b"\xF1":
                 print(f"Received unexpected start byte: {start_byte.hex()}")
-                raise RuntimeError("Did not receive expected 0x0B response")
+                raise RuntimeError("Did not receive expected 0xF0 or 0xF1 response")
+        if start_byte == b"\xF1":
+                print("Hot Object Found")
+        elif start_byte == b"\xF0":
+                print("No Hot Object Found")
         get_status()
 
 def calibrate_servo():
@@ -42,7 +45,12 @@ def play_music():
             raise RuntimeError("Did not receive expected 0x07 response")
 
 def test_1():
-    print("Test 1")
+    cybot.write(b"\x08")
+    cybot.write('\n'.encode())
+    start_byte = cybot.read(1)
+    if start_byte != b"\x08":
+            print(f"Received unexpected start byte: {start_byte.hex()}")
+            raise RuntimeError("Did not receive expected 0x08 response")
 
 def test_2():
     print("Test 2")
@@ -76,6 +84,7 @@ def move_forward():
                 print(f"Received unexpected start byte: {start_byte.hex()}")
                 raise RuntimeError("Did not receive expected 0x0B response")
         get_status()
+
 
 def move_left():
         cybot.write(b"\x0C")
@@ -117,9 +126,7 @@ def get_status():
 
         grid_canvas.delete("all")
 
-        grid_canvas.create_image(0, 0, anchor=tk.NW, image=background_image)
-
-        for i in range(grid_size + 1):
+        for i in range(grid_size + 4):
             grid_canvas.create_line(i * cell_size, 0, i * cell_size, canvas_height)
             grid_canvas.create_line(0, i * cell_size, canvas_width, i * cell_size)
 
@@ -203,21 +210,22 @@ for i, (text, command) in enumerate(buttons):
     button.grid(row=i // 2, column=i % 2, padx=5, pady=5)
 
 canvas_width = 400
-canvas_height = 400
-grid_size = 20
+canvas_height = 700
+grid_size = 4
 cell_size = canvas_width // grid_size
 
 grid_canvas = tk.Canvas(main_frame, width=canvas_width, height=canvas_height, bg=button_bg_color)
 grid_canvas.pack(side=tk.RIGHT, padx=10)
 
-image_path = "U:\\CPRE288\\lab_8\\Live_Jones_Reaction.png"
-original_image = Image.open(image_path)
-resized_image = original_image.resize((canvas_width, canvas_height), Image.LANCZOS)
-background_image = ImageTk.PhotoImage(resized_image)
-grid_canvas.create_image(0, 0, anchor=tk.NW, image=background_image)
+
+#image_path = "U:\\CPRE288\\lab_8\\Live_Jones_Reaction.png"
+#original_image = Image.open(image_path)
+#resized_image = original_image.resize((canvas_width, canvas_height), Image.LANCZOS)
+#background_image = ImageTk.PhotoImage(resized_image)
+# grid_canvas.create_image(0, 0, anchor=tk.NW, image=background_image)
 
 # Draw grid lines
-for i in range(grid_size + 1):
+for i in range(grid_size + 4):
     grid_canvas.create_line(i * cell_size, 0, i * cell_size, canvas_height)
     grid_canvas.create_line(0, i * cell_size, canvas_width, i * cell_size)
 

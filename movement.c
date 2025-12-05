@@ -79,11 +79,32 @@ uint8_t move_forward(oi_t *sensor, int mm, int max_speed, s_pos *self){
             oi_setWheels(0, 0);
             return 1;
         }
+
+        /* IR Value Readings:
+         *
+         * White Tape: when x > 2650
+         *
+         * Black Tape: when x < 200
+         *
+         * Grey Floor is typically between 1600 to 2400
+         *
+         */
+        /*if ((sensor->cliffLeftSignal > 2650) || (sensor->cliffFrontLeftSignal > 2650) || (sensor->cliffFrontRightSignal > 2650) || (sensor->cliffRightSignal > 2650)) {
+            turn_clockwise(sensor, 180, 200, self);
+            return 3;
+            // potentially turn?
+        }*/
+        if ((sensor->cliffLeftSignal < 100) || (sensor->cliffFrontLeftSignal < 100) || (sensor->cliffFrontRightSignal < 100) || (sensor->cliffRightSignal < 100)) {
+            turn_clockwise(sensor, 180, 200, self);
+            return 2;
+           // potentially turn?
+        }
     }
 
     oi_setWheels(0, 0); // stop
     return 0;
 }
+
 
 int get_speed(int target_disp, int current_disp, int max_speed, int acceleration){
     if(target_disp>(max_speed/acceleration)){
@@ -124,4 +145,3 @@ void dummy_move(oi_t *sensor, int mm, int move_speed){
 
     oi_setWheels(0, 0);
 }
-
